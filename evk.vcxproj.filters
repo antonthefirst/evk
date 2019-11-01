@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="wrap\app_wrap.cpp">
+      <Filter>wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="wrap\input_wrap.cpp">
+      <Filter>wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="core\log.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\maths.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="wrap\recorder_wrap.cpp">
+      <Filter>wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="core\pose.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\timers.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="core\cpu_timer.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\dir.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\vec2.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\vec3.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\vec4.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="core\file_stat.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="wrap\imgui_impl_glfw.cpp">
+      <Filter>wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="wrap\imgui_impl_vulkan.cpp">
+      <Filter>wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\imgui\imgui.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\imgui\imgui_demo.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\imgui\imgui_draw.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\imgui\imgui_widgets.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="wrap\stb_wrap.cpp">
+      <Filter>wrap</Filter>
+    </ClCompile>
+    <ClCompile Include="src\evk.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="libs\GLFW\glfw3.h">
+      <Filter>libs\glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\GLFW\glfw3native.h">
+      <Filter>libs\glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="wrap\app_wrap.h">
+      <Filter>wrap</Filter>
+    </ClInclude>
+    <ClInclude Include="wrap\input_wrap.h">
+      <Filter>wrap</Filter>
+    </ClInclude>
+    <ClInclude Include="core\log.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\maths.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\stb\stb_image.h">
+      <Filter>libs\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="core\basic_types.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\container.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\stb\stb_image_write.h">
+      <Filter>libs\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\GLFW\glfw3_64.h">
+      <Filter>libs\glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\GLFW\glfw3native_64.h">
+      <Filter>libs\glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="wrap\recorder_wrap.h">
+      <Filter>wrap</Filter>
+    </ClInclude>
+    <ClInclude Include="core\crc.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\pose.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\type_magic.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\timers.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="core\cpu_timer.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\string_range.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\dir.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\vec2.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\vec3.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\vec4.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\win_dirent.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\file_stat.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="wrap\imgui_impl_glfw.h">
+      <Filter>wrap</Filter>
+    </ClInclude>
+    <ClInclude Include="wrap\imgui_impl_vulkan.h">
+      <Filter>wrap</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imconfig.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imgui.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imgui_internal.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imgui_user.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imstb_rectpack.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imstb_textedit.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\imgui\imstb_truetype.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\evk.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="libs">
+      <UniqueIdentifier>{336c9dd5-7c68-453d-88b7-56369177b40d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\glfw">
+      <UniqueIdentifier>{111565b8-7803-4a6b-bcbb-04d5cc506d7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\imgui">
+      <UniqueIdentifier>{977d56b8-c953-49a7-988b-823ae885bdc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{483c7e91-8873-43b6-9cff-b7ca54bddcca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="wrap">
+      <UniqueIdentifier>{18bc355c-1c08-4784-ace2-21cfe3e1a8b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{9c180f66-a118-4cc1-914e-bd194ba04e62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{d9c0951a-f034-4d3d-a242-b792c88ac659}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\stb">
+      <UniqueIdentifier>{1ad6307c-3772-4011-8e9d-ddb327d6aab9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
