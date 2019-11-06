@@ -29,50 +29,110 @@ extern EasyVk evk;
 void evkInit(const char** extensions, uint32_t extensions_count);
 void evkTerm();
 
+uint32_t evkMemoryType(VkMemoryPropertyFlags properties, uint32_t type_bits);
 int  evkMinImageCount();
 void evkSelectSurfaceFormatAndPresentMode(VkSurfaceKHR surface);
 void evkResizeWindow(ivec2 res);
 void evkCheckError(VkResult err);
 EasyVkCheckErrorFunc evkGetCheckErrorFunc();
+//void evkDebugSetObjectName(VkObjectType objectType, uint64_t objectHandle, const char* pObjectName);
 
+void evkResetCommandPool(VkCommandPool command_pool);
+void evkBeginCommandBuffer(VkCommandBuffer command_buffer);
+void evkEndCommandBufferAndSubmit(VkCommandBuffer command_buffer);
+
+void evkFrameAcquire();
 void evkRenderBegin();
 VkCommandBuffer evkGetRenderCommandBuffer();
 void evkRenderEnd();
-void evkPresent();
+void evkFramePresent();
 
-/*
+void evkWaitUntilDeviceIdle();
+void evkWaitUntilReadyToTerm();
 
-struct EasyVkFrame {
-	VkCommandPool comm_pool;
-	VkCommandBuffer comm_buff;
-	VkFence fence;
-	VkImage back_buff;
-	VkImageView back_buff_view;
-	VkFramebuffer frame_buff;
-};
+inline
+VkDescriptorSetLayoutBinding evkMakeDescriptorSetLayoutBinding(VkDescriptorType type,
+                                                               VkShaderStageFlags stageFlags,
+                                                               uint32_t binding,
+                                                               uint32_t descriptorCount = 1) {
+	VkDescriptorSetLayoutBinding setLayoutBinding {};
+	setLayoutBinding.descriptorType = type;
+	setLayoutBinding.stageFlags = stageFlags;
+	setLayoutBinding.binding = binding;
+	setLayoutBinding.descriptorCount = descriptorCount;
+	return setLayoutBinding;
+}
 
-struct EasyVkFrameSem {
+inline
+VkDescriptorSetLayoutCreateInfo evkMakeDescriptorSetLayoutCreateInfo(const VkDescriptorSetLayoutBinding* pBindings,
+                                                                     uint32_t bindingCount) {
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo {};
+	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptorSetLayoutCreateInfo.pBindings = pBindings;
+	descriptorSetLayoutCreateInfo.bindingCount = bindingCount;
+	return descriptorSetLayoutCreateInfo;
+}
 
-};
+inline
+VkPipelineLayoutCreateInfo evkMakePipelineLayoutCreateInfo(const VkDescriptorSetLayout* pSetLayouts,
+                                                           uint32_t setLayoutCount = 1) {
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
+	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutCreateInfo.setLayoutCount = setLayoutCount;
+	pipelineLayoutCreateInfo.pSetLayouts = pSetLayouts;
+	return pipelineLayoutCreateInfo;
+}
 
-#include "core/vec2.h"
-struct EasyVkWindow {
-	ivec2 res;
-	VkSwapchainKHR swapchain;
-	VkSurfaceKHR surface;
-	VkSurfaceFormatKHR surface_format;
-	VkPresentModeKHR present_mode;
-	VkRenderPass render_pass;
-	bool clear_enable;
-	VkClearValue clear_value;
-	uint32_t frame_idx;
-	uint32_t buff_count;
-	uint32_t sem_idx;
-	EasyVkFrame* frames;
-	EasyVkFrameSem* frame_sems;
-};
+inline
+VkDescriptorSetAllocateInfo evkMakeDescriptorSetAllocateInfo(VkDescriptorPool descriptorPool,
+                                                             const VkDescriptorSetLayout* pSetLayouts,
+                                                             uint32_t descriptorSetCount) {
+	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo {};
+	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descriptorSetAllocateInfo.descriptorPool = descriptorPool;
+	descriptorSetAllocateInfo.pSetLayouts = pSetLayouts;
+	descriptorSetAllocateInfo.descriptorSetCount = descriptorSetCount;
+	return descriptorSetAllocateInfo;
+}
 
-evk.win.res.x
+inline
+VkWriteDescriptorSet evkMakeWriteDescriptorSet(VkDescriptorSet dstSet,
+                                               VkDescriptorType type,
+                                               uint32_t binding,
+                                               VkDescriptorBufferInfo* bufferInfo,
+                                               uint32_t descriptorCount = 1) {
+	VkWriteDescriptorSet writeDescriptorSet {};
+	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeDescriptorSet.dstSet = dstSet;
+	writeDescriptorSet.descriptorType = type;
+	writeDescriptorSet.dstBinding = binding;
+	writeDescriptorSet.pBufferInfo = bufferInfo;
+	writeDescriptorSet.descriptorCount = descriptorCount;
+	return writeDescriptorSet;
+}
 
+inline
+VkWriteDescriptorSet evkMakeWriteDescriptorSet(VkDescriptorSet dstSet,
+                                               VkDescriptorType type,
+                                               uint32_t binding,
+                                               VkDescriptorImageInfo *imageInfo,
+                                               uint32_t descriptorCount = 1) {
+	VkWriteDescriptorSet writeDescriptorSet {};
+	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeDescriptorSet.dstSet = dstSet;
+	writeDescriptorSet.descriptorType = type;
+	writeDescriptorSet.dstBinding = binding;
+	writeDescriptorSet.pImageInfo = imageInfo;
+	writeDescriptorSet.descriptorCount = descriptorCount;
+	return writeDescriptorSet;
+}
 
-*/
+inline
+VkComputePipelineCreateInfo evkMakeComputePipelineCreateInfo(VkPipelineLayout layout, 
+                                                      VkPipelineCreateFlags flags = 0) {
+	VkComputePipelineCreateInfo computePipelineCreateInfo {};
+	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computePipelineCreateInfo.layout = layout;
+	computePipelineCreateInfo.flags = flags;
+	return computePipelineCreateInfo;
+}

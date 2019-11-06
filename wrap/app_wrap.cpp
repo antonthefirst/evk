@@ -76,13 +76,8 @@ int appInit(AppInit init)
 	return 0;
 }
 
-void appGetState(AppState& state)
-{
-	glfwGetFramebufferSize(gWindow, &state.res_x, &state.res_y);
-	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-	state.refresh_rate = mode->refreshRate; //#DODGY we are basically assuming that the primary monitor's windows request succeeded
-	state.window = gWindow;
+GLFWwindow* appGetWindow() {
+	return gWindow;
 }
 
 bool appShouldClose()

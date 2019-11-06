@@ -1,0 +1,43 @@
+#version 450
+
+
+#ifdef _WIN32
+typedef unsigned int uint;
+#endif
+
+#ifdef _WIN32
+struct ComputeUPC {
+#else
+layout(push_constant) uniform UPC {
+#endif
+	uint stage;
+};
+
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (binding = 0, rgba32ui) uniform uimage2D apple;
+layout (binding = 1, r32ui) uniform uimage2D bannana;
+layout (binding = 2, r8ui) uniform uimage2D cucumber;
+layout (binding = 3, rgba8ui) uniform uimage2D durian;
+
+uint uint_hash(uint x) {
+    x = (x ^ 61U) ^ (x >> 16U);
+    x *= 9U;
+    x = x ^ (x >> 4U);
+    x *= 0x27d4eb2dU;
+    x = x ^ (x >> 15U);
+    return x;
+}
+
+void main() {
+	uvec3 rgb = imageLoad(durian, ivec2(gl_GlobalInvocationID.xy)).rgb;
+	rgb.x += 4;
+	if (rgb.x > 255)
+		rgb.x = 0;
+	
+	uint par = (gl_GlobalInvocationID.x ^ gl_GlobalInvocationID.y ^ stage) & 1;
+	rgb = uvec3(par*255);
+
+	imageStore(durian, ivec2(gl_GlobalInvocationID.xy), uvec4(rgb, 255));
+}

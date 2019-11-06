@@ -23,7 +23,7 @@ struct AppState
 };
 
 int appInit(AppInit init);
-void appGetState(AppState& state);
+GLFWwindow* appGetWindow();
 bool appShouldClose();
 void appSwapBuffers();
 void appTerm();

@@ -36,7 +36,7 @@ void logError(const char* system, int code, const char * format, ...) {
 	int64_t t = timeCounterSinceStart();
 	int64_t f = time_frequency();
 
-	str += sprintf(str, "%lld.%lld [ ERROR ] [ %s ]", t / f, t%f, system);
+	str += sprintf(str, "%lld.%lld [ ERROR ] [ %s ]", t / f, t % f, system);
 	if (code)
 		str += sprintf(str, " [code %d (0x%08x)]", code, code);
 	str += sprintf(str, ": '");

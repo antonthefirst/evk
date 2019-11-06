@@ -1,0 +1,100 @@
+[ Instance ]
+- vk runtime
+- one per application
+
+[ Physical Device ]
+
+[ Allocator ]
+
+Capabilities: alloc memory, free memory
+
+[ Logical Device ]
+- potentially more than one per physical device, depending on features you want
+Capabilities: create queues, get queues, set queue priorities, map memory, create buffer
+
+
+[ Queue Family ]
+
+
+
+[ Queue ]
+
+
+
+[ Render Pass ]
+
+Capabilities: (multi)sample count?, ClearEnable, attachments
+
+
+[ Framebuffer ]
+
+Capabilities: resolution
+
+
+[ Swap Chain ]
+
+Capabilities: buffer count (latency)
+
+
+[ Pipeline Layout ]
+
+Capabilities: constants
+
+
+[ Command Buffer ]
+
+Capabilities: barriers
+
+
+[ Descriptor Set ]
+
+Capablities: set sampler
+
+[ Vertex Input Binding Description ]
+
+Capability: vertex stride and multiplier (instancing vs not)
+
+[ Vertex Input Attribute Description ]
+
+Capability: location, format, offset
+
+[ Pipeline Input Assembly ]
+
+Capability: primitive type (tri, line, point)
+
+[ Pipeline Viewport ]
+
+Capability: viewport, scissor
+
+[ Pipeline Rasterization ]
+
+Capability: polygon mode (fill, line, point), cull mode, front face winding
+
+[ Pipeline Multisample ]
+
+Capability: rasterization samples
+
+[ Pipeline Color Blend Attachment ]
+
+Capability: blend enable, src/dest factor, blend op, color mask
+
+[ Pipeline Depth Stencil State ]
+
+Capability:
+
+[ Graphics Pipeline ]
+
+Capability: stage shaders, all above structs, pipeline cache
+
+[ Compute Pipeline ]
+
+[ Uniform Buffer ]
+- persistently mapped with HOST_VISIBLE and COHERENT bit
+Capabilities: large uniform data
+Questions:
+ - how is this different from a regular read only buffer?
+ - when is the memory visible next?
+
+[ Push Constants ]
+
+VertexInputState = VertexInputBinding + VertexInputAttribute

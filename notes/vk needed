@@ -1,0 +1,11 @@
+make an image with a given format and resolution, no data needed (will be filled in by shader)
+a compute shader that writes to this texture
+a render shader that reads from this texture and displays it on screen
+another compute shader that reads from that texture and writes to another texture
+uniforms to be set on the compute shader
+
+actually there is just 1 compute shader, and it's called multiple times back to back. this is done to avoid switching programs. keep doing it this way for now, but maybe it's not such a big deal in vulkan (and more can be gained by setting buffers to be read/write only and removing some of the fencing or somesuch...
+
+uniforms are all same, except for setting the "stage" (doesn't matter for now, just need a decent way to set uniforms i think)
+
+somewhat ideally, i can in the future just run the update pass on the compute queue, many many times, and not actually render it or block on it.

@@ -88,11 +88,21 @@ static void imguiInit(GLFWwindow* window) {
         ImGui_ImplVulkan_DestroyFontUploadObjects();
     }
 }
+static void imguiTerm() {
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
 static void imguiNewFrame() {
 	ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
+
+extern void basicUpdate();
+extern void basicCompute(VkCommandBuffer command_buffer);
+extern void basicRender(VkCommandBuffer command_buffer);
+extern void basicTerm();
 
 int main(int, char**)
 {
@@ -144,36 +154,37 @@ int main(int, char**)
 	if (ret) return ret;
 
 	Input in;
-	AppState app_state;
-	appGetState(app_state);
-
-	imguiInit(app_state.window);
+	imguiInit(appGetWindow());
 
     while (!appShouldClose())
     {
-		inputPoll(app_state.window, in);
-		appGetState(app_state); //#OPT should probably remove this and memoize instead
+		inputPoll(appGetWindow(), in);
 
 		if (in.key.press[KEY_F2])
 			recUIToggle();
 
 		imguiNewFrame();
 		ImGui::ShowDemoWindow();
-		// basicUpdate();
+		basicUpdate();
 		ImGui::Render();
 
 		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 		memcpy(&evk.win.ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
+
+		evkFrameAcquire();
+
+		basicCompute(evkGetRenderCommandBuffer());
+
 		evkRenderBegin();
-		
-		// Record Imgui Draw Data and draw funcs into command buffer
+		basicRender(evkGetRenderCommandBuffer());
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), evkGetRenderCommandBuffer());
-
 		evkRenderEnd();
-		evkPresent();
-	}
 
-	//imguiTerm();
+		evkFramePresent();
+	}
+	evkWaitUntilReadyToTerm();
+	basicTerm();
+	imguiTerm();
 	appTerm();
 
     return 0;

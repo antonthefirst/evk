@@ -7,9 +7,43 @@ static void destroyAllFramesAndSemaphores();
 
 EasyVk evk;
 
+
+const char* errorString(VkResult errorCode) {
+	switch (errorCode)
+	{
+#define STR(r) case VK_ ##r: return #r
+		STR(NOT_READY);
+		STR(TIMEOUT);
+		STR(EVENT_SET);
+		STR(EVENT_RESET);
+		STR(INCOMPLETE);
+		STR(ERROR_OUT_OF_HOST_MEMORY);
+		STR(ERROR_OUT_OF_DEVICE_MEMORY);
+		STR(ERROR_INITIALIZATION_FAILED);
+		STR(ERROR_DEVICE_LOST);
+		STR(ERROR_MEMORY_MAP_FAILED);
+		STR(ERROR_LAYER_NOT_PRESENT);
+		STR(ERROR_EXTENSION_NOT_PRESENT);
+		STR(ERROR_FEATURE_NOT_PRESENT);
+		STR(ERROR_INCOMPATIBLE_DRIVER);
+		STR(ERROR_TOO_MANY_OBJECTS);
+		STR(ERROR_FORMAT_NOT_SUPPORTED);
+		STR(ERROR_SURFACE_LOST_KHR);
+		STR(ERROR_NATIVE_WINDOW_IN_USE_KHR);
+		STR(SUBOPTIMAL_KHR);
+		STR(ERROR_OUT_OF_DATE_KHR);
+		STR(ERROR_INCOMPATIBLE_DISPLAY_KHR);
+		STR(ERROR_VALIDATION_FAILED_EXT);
+		STR(ERROR_INVALID_SHADER_NV);
+#undef STR
+	default:
+		return "UNKNOWN_ERROR";
+	}
+}
+
 static void check_vk_result(VkResult err) {
     if (err == 0) return;
-    log("VkResult %d\n", err);
+	logError("VK", err, errorString(err));
     if (err < 0)
         abort();
 }
@@ -51,7 +85,7 @@ void evkInit(const char** extensions, uint32_t extensions_count) {
 			const char** extensions_ext = (const char**)malloc(sizeof(const char*) * (extensions_count + 1));
 			memcpy(extensions_ext, extensions, extensions_count * sizeof(const char*));
 			extensions_ext[extensions_count] = "VK_EXT_debug_report";
-			create_info.enabledExtensionCount = extensions_count + 1;
+			create_info.enabledExtensionCount = extensions_count+1;
 			create_info.ppEnabledExtensionNames = extensions_ext;
 
 			// Create Vulkan Instance
@@ -156,9 +190,6 @@ void evkInit(const char** extensions, uint32_t extensions_count) {
     }
 }
 void evkTerm() {
-    vkDeviceWaitIdle(evk.dev); // FIXME: We could wait on the Queue if we had the queue in wd-> (otherwise VulkanH functions can't use globals)
-    //vkQueueWaitIdle(g_Queue);
-
 	destroyAllFramesAndSemaphores();
     vkDestroyRenderPass(evk.dev, evk.win.RenderPass, evk.alloc);
     vkDestroySwapchainKHR(evk.dev, evk.win.Swapchain, evk.alloc);
@@ -172,6 +203,14 @@ void evkTerm() {
     vkDestroyDebugReportCallbackEXT(evk.inst, evk.debug, evk.alloc);
     vkDestroyDevice(evk.dev, evk.alloc);
     vkDestroyInstance(evk.inst, evk.alloc);
+}
+uint32_t evkMemoryType(VkMemoryPropertyFlags properties, uint32_t type_bits) {
+    VkPhysicalDeviceMemoryProperties prop;
+    vkGetPhysicalDeviceMemoryProperties(evk.phys_dev, &prop);
+    for (uint32_t i = 0; i < prop.memoryTypeCount; i++)
+        if ((prop.memoryTypes[i].propertyFlags & properties) == properties && type_bits & (1<<i))
+            return i;
+    return 0xFFFFFFFF; // Unable to find memoryType
 }
 int evkMinImageCount() {
 	return getMinImageCountFromPresentMode(evk.win.PresentMode);
@@ -395,11 +434,48 @@ EasyVkCheckErrorFunc evkGetCheckErrorFunc() {
 	return check_vk_result;
 }
 
+void evkResetCommandPool(VkCommandPool command_pool) {
+	VkResult err;
+    err = vkResetCommandPool(evk.dev, command_pool, 0);
+    evkCheckError(err);
+}
+void evkBeginCommandBuffer(VkCommandBuffer command_buffer) {
+	VkResult err;
+    VkCommandBufferBeginInfo begin_info = {};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    err = vkBeginCommandBuffer(command_buffer, &begin_info);
+    evkCheckError(err);
+}
+void evkEndCommandBufferAndSubmit(VkCommandBuffer command_buffer) {
+    VkResult err;
+	VkSubmitInfo end_info = {};
+    end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    end_info.commandBufferCount = 1;
+    end_info.pCommandBuffers = &command_buffer;
+    err = vkEndCommandBuffer(command_buffer);
+    evkCheckError(err);
+    err = vkQueueSubmit(evk.que, 1, &end_info, VK_NULL_HANDLE);
+    evkCheckError(err);
+}
+void evkDebugSetObjectName(VkObjectType objectType, uint64_t objectHandle, const char* pObjectName) {
+	// doesn't work :(
+	/*
+	auto vkSetDebugUtilsObjectNameEXT  = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(evk.inst, "vkSetDebugUtilsObjectNameEXT");
+	assert(vkSetDebugUtilsObjectNameEXT  != NULL);
+	VkDebugUtilsObjectNameInfoEXT info = {};
+	info.objectType = objectType;
+	info.objectHandle = objectHandle;
+	info.pObjectName = pObjectName;
+	vkSetDebugUtilsObjectNameEXT(evk.dev, &info);
+	*/
+}
+
 static VkSemaphore image_acquired_semaphore = 0;
 static VkSemaphore render_complete_semaphore = 0;
 static VkCommandBuffer render_command_buffer = 0;
 
-void evkRenderBegin() {
+void evkFrameAcquire() {
     VkResult err;
 
     image_acquired_semaphore  = evk.win.FrameSemaphores[evk.win.SemaphoreIndex].ImageAcquiredSemaphore;
@@ -407,24 +483,35 @@ void evkRenderBegin() {
     err = vkAcquireNextImageKHR(evk.dev, evk.win.Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &evk.win.FrameIndex);
     check_vk_result(err);
 
-    ImGui_ImplVulkanH_Frame* fd = &evk.win.Frames[evk.win.FrameIndex];
-	render_command_buffer = fd->CommandBuffer;
-    {
+	ImGui_ImplVulkanH_Frame* fd = &evk.win.Frames[evk.win.FrameIndex];
+
+	{
         err = vkWaitForFences(evk.dev, 1, &fd->Fence, VK_TRUE, UINT64_MAX);    // wait indefinitely instead of periodically checking
         check_vk_result(err);
 
         err = vkResetFences(evk.dev, 1, &fd->Fence);
         check_vk_result(err);
     }
-    {
+
+	{
         err = vkResetCommandPool(evk.dev, fd->CommandPool, 0);
         check_vk_result(err);
+	}
+
+    {
         VkCommandBufferBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         err = vkBeginCommandBuffer(fd->CommandBuffer, &info);
         check_vk_result(err);
     }
+
+	render_command_buffer = fd->CommandBuffer;
+}
+void evkRenderBegin() {
+    VkResult err;
+
+    ImGui_ImplVulkanH_Frame* fd = &evk.win.Frames[evk.win.FrameIndex];
     {
         VkRenderPassBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -465,7 +552,7 @@ void evkRenderEnd() {
     }
 }
 
-void evkPresent() {
+void evkFramePresent() {
     VkSemaphore render_complete_semaphore = evk.win.FrameSemaphores[evk.win.SemaphoreIndex].RenderCompleteSemaphore;
     VkPresentInfoKHR info = {};
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -517,4 +604,13 @@ static void destroyAllFramesAndSemaphores() {
     evk.win.Frames = NULL;
     evk.win.FrameSemaphores = NULL;
     evk.win.ImageCount = 0;
+}
+
+void evkWaitUntilDeviceIdle() {
+	VkResult err;
+	err = vkDeviceWaitIdle(evk.dev);
+	evkCheckError(err);
+}
+void evkWaitUntilReadyToTerm() {
+	evkWaitUntilDeviceIdle();
 }

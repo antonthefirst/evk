@@ -67,6 +67,9 @@
     <ClCompile Include="src\evk.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\basic.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libs\GLFW\glfw3.h">
@@ -200,5 +203,19 @@
     <Filter Include="libs\stb">
       <UniqueIdentifier>{1ad6307c-3772-4011-8e9d-ddb327d6aab9}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\basic.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\basic.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\basic.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="src\compute_shared.inl">
+      <Filter>src</Filter>
+    </None>
   </ItemGroup>
 </Project>

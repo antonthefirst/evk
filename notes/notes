@@ -1,0 +1,3 @@
+tiling is set to optimal, is that ok?
+layout is set to general, but there is this transfer dest optimal, what's that mean?
+no fence on compute, should really do that. since it's in the gfx queue it's unlikely to matter but who knows?

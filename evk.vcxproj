@@ -195,6 +195,7 @@
     <ClCompile Include="libs\imgui\imgui_demo.cpp" />
     <ClCompile Include="libs\imgui\imgui_draw.cpp" />
     <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\basic.cpp" />
     <ClCompile Include="src\evk.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\timers.cpp" />
@@ -241,6 +242,12 @@
     <ClInclude Include="wrap\imgui_impl_vulkan.h" />
     <ClInclude Include="wrap\input_wrap.h" />
     <ClInclude Include="wrap\recorder_wrap.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\basic.comp" />
+    <None Include="shaders\basic.frag" />
+    <None Include="shaders\basic.vert" />
+    <None Include="src\compute_shared.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

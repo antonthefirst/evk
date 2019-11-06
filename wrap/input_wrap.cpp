@@ -7,6 +7,7 @@
 #include <core/maths.h>
 #include <core/log.h>
 #include <string>
+#include "../src/evk.h"
 
 static bool first_frame = true;
 
@@ -64,8 +65,8 @@ void inputPoll(GLFWwindow* gWindow, Input& in)
 		first_frame = false;
 	}
 	glfwPollEvents();
-	AppState s;
-	appGetState(s);
+	
+	ivec2 res = ivec2(evk.win.Width, evk.win.Height);
 
 	//update the "previous"
 	memcpy(keyPrev, in.key.down, sizeof(keyPrev));
@@ -84,9 +85,9 @@ void inputPoll(GLFWwindow* gWindow, Input& in)
 	glfwGetCursorPos(gWindow, &fmx, &fmy);
 	int mx = int(floor(fmx));
 	int my = int(floor(fmy));
-	my = int(s.res_y - my);
-	in.mouse.x = float(mx) / float(s.res_x);
-	in.mouse.y = float(my) / float(s.res_y);
+	my = int(res.y - my);
+	in.mouse.x = float(mx) / float(res.x);
+	in.mouse.y = float(my) / float(res.y);
 	in.mouse.dx = in.mouse.x - mouseXPrev;
 	in.mouse.dy = in.mouse.y - mouseYPrev;
 	in.mouse.valid = true;
