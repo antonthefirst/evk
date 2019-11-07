@@ -614,3 +614,10 @@ void evkWaitUntilDeviceIdle() {
 void evkWaitUntilReadyToTerm() {
 	evkWaitUntilDeviceIdle();
 }
+void evkMemoryBarrier(VkCommandBuffer cb, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMsk, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask) {
+	VkMemoryBarrier bar[1] = {};
+	bar[0].sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+	bar[0].srcAccessMask = srcAccessMask;
+	bar[0].dstAccessMask = dstAccessMsk;
+	vkCmdPipelineBarrier(cb, srcStageMask, dstStageMask, 0, 1, bar, 0, NULL, 0, NULL);
+}

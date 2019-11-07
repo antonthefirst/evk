@@ -276,13 +276,14 @@ struct CustomMap {
 			use_barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			use_barrier[0].oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			use_barrier[0].newLayout = VK_IMAGE_LAYOUT_GENERAL;
+			use_barrier[0].dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
 			use_barrier[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			use_barrier[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			use_barrier[0].image = image;
 			use_barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			use_barrier[0].subresourceRange.levelCount = 1;
 			use_barrier[0].subresourceRange.layerCount = 1;
-			vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, use_barrier);
+			vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, use_barrier);
 		}
 		return true;
 	}
@@ -967,6 +968,9 @@ struct BasicQuad {
 
 static BasicQuad quad;
 static ComputeUPC upc;
+static bool do_reset = true;
+static bool do_update = true;
+static bool do_render = true;
 
 void basicUpdate() {
 	recreateComputePipelineIfNeeded();
@@ -980,6 +984,10 @@ void basicUpdate() {
 	if (gui::Button("resize")) {
 		total_map.resize(size);
 	}
+	if (gui::Button("reset"))
+		do_reset = true;
+	gui::Checkbox("update", &do_update);
+	gui::Checkbox("render", &do_render);
 }
 void basicTerm() {
 	total_map.destroy();
@@ -1006,13 +1014,30 @@ void basicCompute(VkCommandBuffer command_buffer) {
 	// Bind descriptor sets
 	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, g_ComputePipelineLayout, 0, 1, &g_ComputeDescriptorSet, 0, 0);
 	
-	upc.stage = 1;
-	vkCmdPushConstants(command_buffer, g_ComputePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeUPC) , &upc);
-	vkCmdDispatch(command_buffer, total_map.size.x / 16, total_map.size.y / 16, 1);
-
-	upc.stage = 2;
-	//vkCmdPushConstants(command_buffer, g_ComputePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeUPC) , &upc);
-	//vkCmdDispatch(command_buffer, total_map.size.x / 16, total_map.size.y / 16, 1);
+	if (do_reset) {
+		do_reset = false;
+		upc.stage = 0;
+		vkCmdPushConstants(command_buffer, g_ComputePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeUPC) , &upc);
+		vkCmdDispatch(command_buffer, total_map.size.x / 16, total_map.size.y / 16, 1);
+		evkMemoryBarrier(command_buffer, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+	}
+	
+	if (do_update) {
+		for (int i = 0; i < 1; ++i) {
+			upc.stage = 1;
+			vkCmdPushConstants(command_buffer, g_ComputePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeUPC) , &upc);
+			vkCmdDispatch(command_buffer, total_map.size.x / 16, total_map.size.y / 16, 1);
+			evkMemoryBarrier(command_buffer, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+		}
+	}
+	
+	if (do_render) {
+		upc.stage = 2;
+		vkCmdPushConstants(command_buffer, g_ComputePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputeUPC) , &upc);
+		vkCmdDispatch(command_buffer, total_map.size.x / 16, total_map.size.y / 16, 1);
+		evkMemoryBarrier(command_buffer, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	}
+	
 }
 void basicRender(VkCommandBuffer command_buffer) {
     // Allocate array to store enough vertex/index buffers

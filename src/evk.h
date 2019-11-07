@@ -49,6 +49,9 @@ void evkFramePresent();
 
 void evkWaitUntilDeviceIdle();
 void evkWaitUntilReadyToTerm();
+void evkMemoryBarrier(VkCommandBuffer cb,
+                      VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMsk,
+                      VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask);
 
 inline
 VkDescriptorSetLayoutBinding evkMakeDescriptorSetLayoutBinding(VkDescriptorType type,
