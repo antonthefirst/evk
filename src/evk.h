@@ -29,6 +29,8 @@ extern EasyVk evk;
 void evkInit(const char** extensions, uint32_t extensions_count);
 void evkTerm();
 
+VkShaderModule evkCreateShaderFromFile(const char* pathfile);
+
 uint32_t evkMemoryType(VkMemoryPropertyFlags properties, uint32_t type_bits);
 int  evkMinImageCount();
 void evkSelectSurfaceFormatAndPresentMode(VkSurfaceKHR surface);

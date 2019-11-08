@@ -70,6 +70,9 @@
     <ClCompile Include="src\basic.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="core\runprog.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libs\GLFW\glfw3.h">
@@ -176,6 +179,9 @@
     </ClInclude>
     <ClInclude Include="src\evk.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="core\runprog.h">
+      <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -90,11 +90,18 @@ Capability: stage shaders, all above structs, pipeline cache
 
 [ Uniform Buffer ]
 - persistently mapped with HOST_VISIBLE and COHERENT bit
-Capabilities: large uniform data
+Capabilities: "large" uniform data
 Questions:
  - how is this different from a regular read only buffer?
  - when is the memory visible next?
 
 [ Push Constants ]
+- pushed as part of command buffer
+Capabilities: no buffer copy required, for "small" data
+
+[ Specialization Constants ]
+- pipeline must be recreated to change them
+Capabilities: ?
+Questions: why are they useful?
 
 VertexInputState = VertexInputBinding + VertexInputAttribute

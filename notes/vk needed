@@ -1,8 +1,6 @@
-make an image with a given format and resolution, no data needed (will be filled in by shader)
-a compute shader that writes to this texture
-a render shader that reads from this texture and displays it on screen
-another compute shader that reads from that texture and writes to another texture
-uniforms to be set on the compute shader
+a write buffer for compute shader, for stats and site info.
+copy that buffer to host visible memory (potentially double buffered) and then copy that to host
+a read/write buffer for compute control. a way to zero it from cpu side (maybe easiest with dispatch) and a way to read/write from it (just regular barriers i think).
 
 actually there is just 1 compute shader, and it's called multiple times back to back. this is done to avoid switching programs. keep doing it this way for now, but maybe it's not such a big deal in vulkan (and more can be gained by setting buffers to be read/write only and removing some of the fencing or somesuch...
 

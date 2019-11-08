@@ -1,10 +1,7 @@
 #include "evk.h"
 #include "core/log.h" // for ARRSIZE
-#include "core/cpu_timer.h"
 #include <stdlib.h>	  // for malloc, system
 #include <stdio.h>    // for popen
-#include "core/string_range.h"
-#include "core/runprog.h"
 #include "compute_shared.inl"
 
 typedef unsigned short DrawIdx;
@@ -121,18 +118,74 @@ static uint32_t* compileGLSLFiletoSPIRV(const char* pathfile, size_t* spirv_len)
 	return (uint32_t*)loadBinary(TempStr("%s.spv", pathfile), spirv_len);
 }
 #else
+#include <windows.h>
 
 static uint32_t* compileGLSLFiletoSPIRV(const char* pathfile, size_t* spirv_len) {
-	String output;
+	HANDLE g_hChildStd_OUT_Rd = NULL;
+	HANDLE g_hChildStd_OUT_Wr = NULL;
 
-	runProg(TempStr("glslc -o %s.spv %s", pathfile, pathfile), &output);
-
-	if (output.str) {
-		log(output.str);
+	// Create a pipe to listen to the output:
+	{
+		SECURITY_ATTRIBUTES saAttr; 
+	   saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+	   saAttr.bInheritHandle = TRUE; 
+	   saAttr.lpSecurityDescriptor = NULL; 
+		if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0)) 
+			abort();
+		if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+			abort(); 
 	}
-	output.free();
 
-	return (uint32_t*)loadBinary(TempStr("%s.spv", pathfile), spirv_len);
+	LPCTSTR lpApplicationName = NULL;//"c:/VulkanSDK/1.1.121.2/Bin/glslc.exe";
+   // additional information
+   STARTUPINFO si;     
+   PROCESS_INFORMATION pi;
+
+   // set the size of the structures
+   ZeroMemory( &si, sizeof(si) );
+   si.cb = sizeof(si);
+   si.hStdError = g_hChildStd_OUT_Rd;
+   si.hStdOutput = g_hChildStd_OUT_Rd;
+   si.hStdInput = NULL;
+   si.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+   si.wShowWindow = SW_HIDE;
+   ZeroMemory( &pi, sizeof(pi) );
+
+   //LPSTR arg = "glslc -o shaders/basic.frag.spv shaders/basic.frag";
+   LPSTR arg = "glslc -E shaders/basic.frag";
+  // start the program up
+  CreateProcess( lpApplicationName,   // the path
+    arg,        // Command line
+    NULL,           // Process handle not inheritable
+    NULL,           // Thread handle not inheritable
+    TRUE,          // Set handle inheritance to FALSE
+    0,              // No creation flags
+    NULL,           // Use parent's environment block
+    NULL,           // Use parent's starting directory 
+    &si,            // Pointer to STARTUPINFO structure
+    &pi             // Pointer to PROCESS_INFORMATION structure (removed extra parentheses)
+    );
+
+    // Close process and thread handles. 
+	
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+	// Read the output:
+  {
+	DWORD dwRead, dwWritten; 
+	CHAR chBuf[2048]; 
+	BOOL bSuccess = FALSE;
+	bSuccess = ReadFile( g_hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
+	/*
+	for (;;)  { 
+	bSuccess = ReadFile( g_hChildStd_OUT_Rd, chBuf, sizeof(chBuf), &dwRead, NULL);
+	if( ! bSuccess || dwRead == 0 ) break; 
+	} 
+	*/
+  }
+
+
+	return 0;
 }
 #endif
 
@@ -243,7 +296,6 @@ struct TotalMap {
 		bannana.destroy();
 		cucumber.destroy();
 		durian.destroy();
-		size = ivec2(0,0);
 	}
 	bool resize(ivec2 new_size) {
 		if (size == new_size) return true;
@@ -271,29 +323,6 @@ struct TotalMap {
 
 		size = new_size;
 
-		// Create render view:
-		{
-			VkImageViewCreateInfo info = {};
-			info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			info.image = durian.image;
-			info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			info.format = VK_FORMAT_R8G8B8A8_UNORM;
-			info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			info.subresourceRange.levelCount = 1;
-			info.subresourceRange.layerCount = 1;
-			err = vkCreateImageView(evk.dev, &info, evk.alloc, &render_view);
-			evkCheckError(err);
-			if (err) { destroy(); return false; }
-		}
-
-		updateDescriptors();
-
-		// Wait until images are finished initializing before using them.
-		evkWaitUntilDeviceIdle();
-
-		return true;
-	}
-	void updateDescriptors() {
 		// Update compute descriptor set:
 		{
 			VkImageView views[] = { apple.view, bannana.view, cucumber.view, durian.view };
@@ -311,6 +340,21 @@ struct TotalMap {
 			}
 			vkUpdateDescriptorSets(evk.dev, ARRSIZE(views), write_desc, 0, NULL);
 		}
+
+		// Create render view:
+		{
+			VkImageViewCreateInfo info = {};
+			info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			info.image = durian.image;
+			info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			info.format = VK_FORMAT_R8G8B8A8_UNORM;
+			info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			info.subresourceRange.levelCount = 1;
+			info.subresourceRange.layerCount = 1;
+			err = vkCreateImageView(evk.dev, &info, evk.alloc, &render_view);
+			evkCheckError(err);
+			if (err) { destroy(); return false; }
+		}
 		// Update render descriptor set:
 		{
 			VkDescriptorImageInfo desc_image[1] = {};
@@ -325,6 +369,11 @@ struct TotalMap {
 			write_desc[0].pImageInfo = desc_image;
 			vkUpdateDescriptorSets(evk.dev, 1, write_desc, 0, NULL);
 		}
+
+		// Wait until images are finished initializing before using them.
+		evkWaitUntilDeviceIdle();
+
+		return true;
 	}
 };
 
@@ -553,8 +602,7 @@ void recreateComputePipelineIfNeeded() {
 	if (g_ComputePipeline) return;
 
     VkResult err;
-    VkShaderModule comp_module = evkCreateShaderFromFile("shaders/basic.comp");
-	/*
+    VkShaderModule comp_module;
     // Create The Shader Module:
     {
         VkShaderModuleCreateInfo comp_info = {};
@@ -563,7 +611,6 @@ void recreateComputePipelineIfNeeded() {
         err = vkCreateShaderModule(evk.dev, &comp_info, evk.alloc, &comp_module);
 		free((void*)comp_info.pCode);
     }
-	*/
 
 	// Create Descriptor Set Layout
 	{
@@ -619,8 +666,27 @@ void recreateGraphicsPipelineIfNeeded() {
 	if (g_Pipeline) return;
 
     VkResult err;
-    VkShaderModule vert_module = evkCreateShaderFromFile("shaders/basic.vert");
-    VkShaderModule frag_module = evkCreateShaderFromFile("shaders/basic.frag");
+    VkShaderModule vert_module;
+    VkShaderModule frag_module;
+
+    // Create The Shader Modules:
+    {
+        VkShaderModuleCreateInfo vert_info = {};
+        vert_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		vert_info.pCode = (uint32_t*)loadBinary("shaders/basic.vert.spv", &vert_info.codeSize);
+        err = vkCreateShaderModule(evk.dev, &vert_info, evk.alloc, &vert_module);
+		evkCheckError(err);
+		free((void*)vert_info.pCode);
+        VkShaderModuleCreateInfo frag_info = {};
+        frag_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		//frag_info.pCode = (uint32_t*)loadBinary("shaders/basic.frag.spv", &frag_info.codeSize);
+		//frag_info.pCode = compileGLSLFiletoSPIRV("shaders/basic.frag.spv", &frag_info.codeSize);
+		frag_info.pCode = compileGLSLFiletoSPIRV("shaders/basic.frag", &frag_info.codeSize);
+        err = vkCreateShaderModule(evk.dev, &frag_info, evk.alloc, &frag_module);
+		evkCheckError(err);
+		free((void*)frag_info.pCode);
+    }
+
 	
     if (!g_FontSampler)
     {
@@ -901,20 +967,6 @@ static bool do_reset = true;
 static bool do_update = true;
 static bool do_render = true;
 
-void destroyPipelines() {
-	if (g_ComputeFontView)             { vkDestroyImageView(evk.dev, g_ComputeFontView, evk.alloc); g_ComputeFontView = VK_NULL_HANDLE; }
-    if (g_FontView)             { vkDestroyImageView(evk.dev, g_FontView, evk.alloc); g_FontView = VK_NULL_HANDLE; }
-    if (g_FontImage)            { vkDestroyImage(evk.dev, g_FontImage, evk.alloc); g_FontImage = VK_NULL_HANDLE; }
-    if (g_FontMemory)           { vkFreeMemory(evk.dev, g_FontMemory, evk.alloc); g_FontMemory = VK_NULL_HANDLE; }
-    if (g_FontSampler)          { vkDestroySampler(evk.dev, g_FontSampler, evk.alloc); g_FontSampler = VK_NULL_HANDLE; }
-    if (g_DescriptorSetLayout)  { vkDestroyDescriptorSetLayout(evk.dev, g_DescriptorSetLayout, evk.alloc); g_DescriptorSetLayout = VK_NULL_HANDLE; }
-    if (g_PipelineLayout)       { vkDestroyPipelineLayout(evk.dev, g_PipelineLayout, evk.alloc); g_PipelineLayout = VK_NULL_HANDLE; }
-    if (g_Pipeline)             { vkDestroyPipeline(evk.dev, g_Pipeline, evk.alloc); g_Pipeline = VK_NULL_HANDLE; }
-    if (g_ComputeDescriptorSetLayout)  { vkDestroyDescriptorSetLayout(evk.dev, g_ComputeDescriptorSetLayout, evk.alloc); g_ComputeDescriptorSetLayout = VK_NULL_HANDLE; }
-    if (g_ComputePipelineLayout)       { vkDestroyPipelineLayout(evk.dev, g_ComputePipelineLayout, evk.alloc); g_ComputePipelineLayout = VK_NULL_HANDLE; }
-    if (g_ComputePipeline)             { vkDestroyPipeline(evk.dev, g_ComputePipeline, evk.alloc); g_ComputePipeline = VK_NULL_HANDLE; }
-}
-
 void basicUpdate() {
 	recreateComputePipelineIfNeeded();
 	recreateGraphicsPipelineIfNeeded();
@@ -931,38 +983,24 @@ void basicUpdate() {
 		do_reset = true;
 	gui::Checkbox("update", &do_update);
 	gui::Checkbox("render", &do_render);
-	if (gui::Button("recompile shader")) {
-		BlockTimer T("compile");
-		{
-			BlockTimer T("wait until idle");
-			evkWaitUntilDeviceIdle();
-		}
-		// destroy old shaders
-		{
-			BlockTimer T("destroy pipelines");
-			destroyPipelines();
-		}
-
-		// rebuild pipelines with new shaders
-		{
-			BlockTimer T("rebuild pipelines");
-			recreateComputePipelineIfNeeded();
-			recreateGraphicsPipelineIfNeeded();
-		}
-
-		total_map.updateDescriptors();
-
-		//size_t spirv_len = 0;
-		//uint32_t* spirv = compileGLSLFiletoSPIRV("shaders/crash_staged_update_direct.comp", &spirv_len);
-		//free(spirv);
-	}
 }
 void basicTerm() {
 	total_map.destroy();
 
     destroyWindowRenderBuffers(&g_MainWindowRenderBuffers);
     destroyUploadBuffer();
-	destroyPipelines();
+
+	if (g_ComputeFontView)             { vkDestroyImageView(evk.dev, g_ComputeFontView, evk.alloc); g_ComputeFontView = VK_NULL_HANDLE; }
+    if (g_FontView)             { vkDestroyImageView(evk.dev, g_FontView, evk.alloc); g_FontView = VK_NULL_HANDLE; }
+    if (g_FontImage)            { vkDestroyImage(evk.dev, g_FontImage, evk.alloc); g_FontImage = VK_NULL_HANDLE; }
+    if (g_FontMemory)           { vkFreeMemory(evk.dev, g_FontMemory, evk.alloc); g_FontMemory = VK_NULL_HANDLE; }
+    if (g_FontSampler)          { vkDestroySampler(evk.dev, g_FontSampler, evk.alloc); g_FontSampler = VK_NULL_HANDLE; }
+    if (g_DescriptorSetLayout)  { vkDestroyDescriptorSetLayout(evk.dev, g_DescriptorSetLayout, evk.alloc); g_DescriptorSetLayout = VK_NULL_HANDLE; }
+    if (g_PipelineLayout)       { vkDestroyPipelineLayout(evk.dev, g_PipelineLayout, evk.alloc); g_PipelineLayout = VK_NULL_HANDLE; }
+    if (g_Pipeline)             { vkDestroyPipeline(evk.dev, g_Pipeline, evk.alloc); g_Pipeline = VK_NULL_HANDLE; }
+    if (g_ComputeDescriptorSetLayout)  { vkDestroyDescriptorSetLayout(evk.dev, g_ComputeDescriptorSetLayout, evk.alloc); g_ComputeDescriptorSetLayout = VK_NULL_HANDLE; }
+    if (g_ComputePipelineLayout)       { vkDestroyPipelineLayout(evk.dev, g_ComputePipelineLayout, evk.alloc); g_ComputePipelineLayout = VK_NULL_HANDLE; }
+    if (g_ComputePipeline)             { vkDestroyPipeline(evk.dev, g_ComputePipeline, evk.alloc); g_ComputePipeline = VK_NULL_HANDLE; }
 }
 void basicCompute(VkCommandBuffer command_buffer) {	
 	// Bind pipeline

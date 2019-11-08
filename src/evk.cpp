@@ -1,6 +1,9 @@
 #include "evk.h"
 #include <string.h>   // for memcpy
 #include "core/log.h" // for assert
+#include "core/file_stat.h"    // for loading binary
+#include "core/string_range.h" // for compiler output
+#include "core/runprog.h"      // for calling compiler
 
 static int getMinImageCountFromPresentMode(VkPresentModeKHR present_mode);
 static void destroyAllFramesAndSemaphores();
@@ -203,6 +206,29 @@ void evkTerm() {
     vkDestroyDebugReportCallbackEXT(evk.inst, evk.debug, evk.alloc);
     vkDestroyDevice(evk.dev, evk.alloc);
     vkDestroyInstance(evk.inst, evk.alloc);
+}
+
+VkShaderModule evkCreateShaderFromFile(const char* pathfile) {
+	VkResult err;
+	String output;
+
+	runProg(TempStr("glslc -o %s.spv %s", pathfile, pathfile), &output);
+
+	if (output.len > 0) {
+		log(output.str);
+		return VK_NULL_HANDLE; //#TODO right now this will bail on warnings too
+	}
+	output.free();
+
+	VkShaderModule module = VK_NULL_HANDLE;
+    VkShaderModuleCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	info.pCode = (uint32_t*)fileReadBinaryIntoMem(TempStr("%s.spv", pathfile), &info.codeSize);
+    err = vkCreateShaderModule(evk.dev, &info, evk.alloc, &module);
+	check_vk_result(err);
+	free((void*)info.pCode);
+
+	return module;
 }
 uint32_t evkMemoryType(VkMemoryPropertyFlags properties, uint32_t type_bits) {
     VkPhysicalDeviceMemoryProperties prop;
