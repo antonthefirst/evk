@@ -951,10 +951,6 @@ void basicUpdate() {
 		}
 
 		total_map.updateDescriptors();
-
-		//size_t spirv_len = 0;
-		//uint32_t* spirv = compileGLSLFiletoSPIRV("shaders/crash_staged_update_direct.comp", &spirv_len);
-		//free(spirv);
 	}
 }
 void basicTerm() {
