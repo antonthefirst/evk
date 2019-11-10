@@ -164,7 +164,14 @@ int main(int, char**)
 			recUIToggle();
 
 		imguiNewFrame();
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
+
+		ctimer_stop();
+		timerUI(in);
+		ctimer_reset();
+		evkTimeFrameGet();
+		ctimer_start("frame");
+
 		basicUpdate();
 		ImGui::Render();
 
@@ -172,6 +179,9 @@ int main(int, char**)
 		memcpy(&evk.win.ClearValue.color.float32[0], &clear_color, 4 * sizeof(float));
 
 		evkFrameAcquire();
+		evkFrameTimerBoundary();
+
+		evkTimeFrameReset();
 
 		basicCompute(evkGetRenderCommandBuffer());
 

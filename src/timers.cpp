@@ -476,7 +476,7 @@ void gtimer_stop() {
 }
 
 void timerUI(Input& in) {
-	static bool show_timer = false;
+	static bool show_timer = true;
 	if (in.key.press[KEY_F1])
 		show_timer = !show_timer;
 
